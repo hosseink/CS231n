@@ -29,7 +29,6 @@ def create_train_table(dirname, idx_to_label):
             image_path = images_dir + line[0]
             table.append([image_path, str(label), 
                           line[1], line[2], line[3], line[4]]) 
-  print len(table)
   perm = np.random.permutation(len(table))
   table = [table[i] for i in perm]
   return table
@@ -44,7 +43,6 @@ def create_val_table(dirname, idx_to_label):
       image_path = images_dir + line[0]
       table.append([image_path, str(idx_to_label[line[1]]), 
       		  line[2], line[3], line[4], line[5]]) 
-  print len(table)
   return table
   
 def create_test_table(dirname):
@@ -52,7 +50,6 @@ def create_test_table(dirname):
   images_dir = dirname + 'images/'
   for image_name in os.listdir(images_dir):
     table.append([images_dir+image_name, image_name])
-  print len(table)
   return table
 
 def create_label_table(filename, idx_to_label):
@@ -63,13 +60,10 @@ def create_label_table(filename, idx_to_label):
       if not line[0] in idx_to_label:
         continue
       table.append([str(idx_to_label[line[0]]), line[0], line[1]])
-  print len(table)
   return table;
 
 
-if __name__ == "__main__":
-
-  # Creating tables
+def create_tables():
   idx_to_label = get_idx_to_label(dataset_dir + "train/")
   train_table = create_train_table(dataset_dir+'train/', idx_to_label)
   val_table = create_val_table(dataset_dir+'val/', idx_to_label)
@@ -91,3 +85,16 @@ if __name__ == "__main__":
   
   words_file = open(table_dir + 'words.txt', 'w')
   words_file.write('\n'.join(['\t'.join(t) for t in label_table]))
+
+  return idx_to_label, train_table, val_table, test_table, label_table
+
+
+if __name__ == "__main__":
+
+  # Creating tables
+  idx_to_label, train_table, val_table, test_table, label_table = create_tables()
+
+
+  
+
+
