@@ -69,6 +69,20 @@ def get_CIFAR10_data(num_training=49000, num_validation=1000, num_test=1000):
     }
     
 
+def augment(path):
+  for filename in os.listdir(path):
+    class_dir = os.path.join(os.path.join(path, filename), 'images')
+    for filename in os.listdir(class_dir):
+      img_file = os.path.join(class_dir, filename)
+      img = imread(img_file)
+      if img.ndim == 2:
+        ## grayscale file
+        img.shape = (64, 64, 1)
+      print img
+      raise
+      
+      print filename
+    
 def load_tiny_imagenet(path, dtype=np.float32):
   """
   Load TinyImageNet. Each of TinyImageNet-100-A, TinyImageNet-100-B, and

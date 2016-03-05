@@ -5,8 +5,10 @@ import codecs
 import pickle
 import glob
 import numpy as np
-
 parent_dirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, parent_dirname)
+from cs231n.data_utils import *
+
 dataset_dir = parent_dirname + "/datasets/tiny-imagenet-200/"
 
 def get_idx_to_label(dirname):
@@ -92,7 +94,8 @@ def create_tables():
 if __name__ == "__main__":
 
   # Creating tables
-  idx_to_label, train_table, val_table, test_table, label_table = create_tables()
+  #idx_to_label, train_table, val_table, test_table, label_table = create_tables()
+  augment(dataset_dir + 'train/')
 
 
   

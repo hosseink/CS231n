@@ -45,7 +45,7 @@ if __name__ == "__main__":
                           use_batchnorm= True, reg=0.001)
 
   solver = Solver(model, data,
-                num_epochs=20, batch_size=50,
+                num_epochs=20, batch_size=100,
                 update_rule='adam',
                 optim_config={
                   'learning_rate': 2e-3,
