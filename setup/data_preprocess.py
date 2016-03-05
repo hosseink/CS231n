@@ -94,8 +94,8 @@ def create_tables():
 if __name__ == "__main__":
 
   # Creating tables
-  #idx_to_label, train_table, val_table, test_table, label_table = create_tables()
-  augment(dataset_dir + 'train/')
+  idx_to_label, train_table, val_table, test_table, label_table = create_tables()
+  augment(dataset_dir + 'train/', .7)
 
 
   
