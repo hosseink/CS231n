@@ -1,7 +1,8 @@
 import cPickle as pickle
 import numpy as np
 import os
-from scipy.misc import imread
+from scipy.misc import imread, imresize, imsave
+import matplotlib.pyplot as plt 
 
 def load_CIFAR_batch(filename):
   """ load single batch of cifar """
@@ -69,19 +70,57 @@ def get_CIFAR10_data(num_training=49000, num_validation=1000, num_test=1000):
     }
     
 
-def augment(path):
-  for filename in os.listdir(path):
-    class_dir = os.path.join(os.path.join(path, filename), 'images')
-    for filename in os.listdir(class_dir):
+def augment(path, rho = .8):
+  for class_name in os.listdir(path):
+    class_dir = os.path.join(os.path.join(path, class_name), 'images')
+    bb_path = os.path.join(os.path.join(path, class_name), class_name + '_boxes.txt')
+    bb = {}
+    filenames = []
+    with open(bb_path,'r') as f:
+        for line in f:
+            line =  line.strip().split('\t')
+            bb[line[0]] = [int(line[1]), int(line[2]), int(line[3]), int(line[4])] 
+            filenames.append(line[0])
+    
+    print class_name
+    for filename in filenames:
+      bbox = bb[filename] 
       img_file = os.path.join(class_dir, filename)
       img = imread(img_file)
+      flag = False
       if img.ndim == 2:
         ## grayscale file
-        img.shape = (64, 64, 1)
-      print img
-      raise
+        img = np.array([img, img, img]).transpose(1,2,0)
+        flag = True
+
+      flipped_img = np.fliplr(img)
+      bb_img = img[bbox[1]:bbox[3], bbox[0]:bbox[2],:]
       
-      print filename
+      dy = int((bbox[3]-bbox[1])*np.sqrt(rho))
+      dx = int((bbox[2]-bbox[0])*np.sqrt(rho))
+   
+
+      
+      img1 = img[0:bbox[1]+dy , 0:bbox[0] + dx, :]
+      img2 = img[bbox[3]-dy:,   0:bbox[0] + dx ,:]
+      img3 = img[bbox[3]-dy: ,  bbox[2] - dx: , :]
+      img4 = img[0:bbox[1]+dy , bbox[2] - dx: , :]
+      
+      if dx < 3 or dy < 3:
+        print "Image skipped"
+        continue
+
+      img1 = imresize(img1, img.shape) 
+      img2 = imresize(img2, img.shape) 
+      img3 = imresize(img3, img.shape) 
+      img4 = imresize(img4, img.shape) 
+      filename = filename.split('.')[0] 
+      imsave(os.path.join(class_dir, filename + '_0.JPEG'), flipped_img)
+      imsave(os.path.join(class_dir, filename + '_1.JPEG'), img1)
+      imsave(os.path.join(class_dir, filename + '_2.JPEG'), img2)
+      imsave(os.path.join(class_dir, filename + '_3.JPEG'), img3)
+      imsave(os.path.join(class_dir, filename + '_4.JPEG'), img4)
+      
     
 def load_tiny_imagenet(path, dtype=np.float32):
   """
