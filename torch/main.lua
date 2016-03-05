@@ -6,8 +6,9 @@ require 'torch'
 require 'cunn'
 require 'cutorch'
 
-train_input='/home/ubuntu/tiny-imagenet-200/train/'
-val_input='/home/ubuntu/tiny-imagenet-200/val/'
+dataset_dir = '../datasets/tiny-imagenet-200/'
+train_input = dataset_dir .. 'train/'
+val_input = dataset_dir .. 'val/'
 local dtype = 'torch.CudaTensor'
 
 local Nt = 0
@@ -106,6 +107,7 @@ print("Network is Loaded!")
 
 local function f(w)
 	assert(w == weights)
+        local r = math.random(0,10)
 	local X_batch = X_train[{{1,100},{},{},{}}]:clone()
 	local y_batch = y_train[{{1,100}}]:clone()
 	local x = X_batch:type(dtype)
