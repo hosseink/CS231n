@@ -70,7 +70,7 @@ def get_CIFAR10_data(num_training=49000, num_validation=1000, num_test=1000):
     }
     
 
-def augment(path, rho = .8):
+def augment(path, rho = .8, only_mirror = True):
   for class_name in os.listdir(path):
     class_dir = os.path.join(os.path.join(path, class_name), 'images')
     bb_path = os.path.join(os.path.join(path, class_name), class_name + '_boxes.txt')
@@ -86,6 +86,7 @@ def augment(path, rho = .8):
     for filename in filenames:
       bbox = bb[filename] 
       img_file = os.path.join(class_dir, filename)
+      filename = filename.split('.')[0] 
       img = imread(img_file)
       flag = False
       if img.ndim == 2:
@@ -95,6 +96,9 @@ def augment(path, rho = .8):
 
       flipped_img = np.fliplr(img)
       bb_img = img[bbox[1]:bbox[3], bbox[0]:bbox[2],:]
+      imsave(os.path.join(class_dir, filename + '_0.JPEG'), flipped_img)
+      if only_mirror:
+        continue
       
       dy = int((bbox[3]-bbox[1])*np.sqrt(rho))
       dx = int((bbox[2]-bbox[0])*np.sqrt(rho))
@@ -114,8 +118,6 @@ def augment(path, rho = .8):
       img2 = imresize(img2, img.shape) 
       img3 = imresize(img3, img.shape) 
       img4 = imresize(img4, img.shape) 
-      filename = filename.split('.')[0] 
-      imsave(os.path.join(class_dir, filename + '_0.JPEG'), flipped_img)
       imsave(os.path.join(class_dir, filename + '_1.JPEG'), img1)
       imsave(os.path.join(class_dir, filename + '_2.JPEG'), img2)
       imsave(os.path.join(class_dir, filename + '_3.JPEG'), img3)

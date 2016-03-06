@@ -20,4 +20,4 @@ rm -f $tinyImageNet
 echo "==========================================="
 echo "=           Dataset Preprocessing         ="
 echo "==========================================="
-python setup/data_preprocess.py
+#python setup/data_preprocess.py

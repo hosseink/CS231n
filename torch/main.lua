@@ -6,9 +6,9 @@ require 'torch'
 require 'cunn'
 require 'cutorch'
 
-
-train_input='/home/ubuntu/tiny-imagenet-200/train/'
-val_input='/home/ubuntu/tiny-imagenet-200/val/'
+dataset_dir = '../datasets/tiny-imagenet-200/'
+train_input = dataset_dir .. 'train/'
+val_input = dataset_dir .. 'val/'
 local dtype = 'torch.CudaTensor'
 
 local Nt = 0
@@ -82,18 +82,18 @@ print("Test Set Loaded!")
 
 -- Defining The Model
 net = nn.Sequential()
-net:add (nn.SpatialConvolution(3,32,3,3,1,1,1,1))
-net:add (nn.SpatialBatchNormalization(32*64*64))
+net:add (nn.SpatialConvolution(3,32,5,5,1,1,2,2))
+net:add (nn.SpatialBatchNormalization(64*64*64))
 net:add (nn.ReLU())
 net:add (nn.Dropout(0.5))
 
-net:add (nn.SpatialConvolution(32,32,3,3,1,1,1,1))
-net:add (nn.SpatialBatchNormalization(32*64*64))
+net:add (nn.SpatialConvolution(32,64,3,3,1,1,1,1))
+net:add (nn.SpatialBatchNormalization(64*64*64))
 net:add (nn.ReLU())
 net:add (nn.Dropout(0.5))
 
-net:add (nn.View(32*64*64))
-net:add (nn.Linear(32*64*64,200))
+net:add (nn.View(64*64*64))
+net:add (nn.Linear(64*64*64,200))
 net:add (nn.BatchNormalization(200))
 net:add (nn.ReLU())
 
