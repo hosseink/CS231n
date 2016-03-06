@@ -91,11 +91,23 @@ def create_tables():
   return idx_to_label, train_table, val_table, test_table, label_table
 
 
+def to_fb_format():
+  train_dir = dataset_dir + "train/"
+  val_dir = dataset_dir + "val/"
+  for class_name in os.listdir(train_dir):
+    class_dir = train_dir + class_name + '/'
+    bb_path = class_dir + class_name + '_boxes.txt'
+    images_dir = class_dir + 'images/'
+    os.system("rm "+bb_path)
+    os.system("mv "+images_dir+"* "+class_dir)
+    os.system("rm -r "+images_dir)
+
 if __name__ == "__main__":
 
   # Creating tables
-  idx_to_label, train_table, val_table, test_table, label_table = create_tables()
-  augment(dataset_dir + 'train/', .7)
+  #idx_to_label, train_table, val_table, test_table, label_table = create_tables()
+  #augment(dataset_dir + 'train/', .7)
+ # to_fb_format();
 
 
   
