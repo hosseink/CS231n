@@ -128,4 +128,21 @@ function Dataset:getBatch(batch_size, withAugmentation, p)
   return X, y
 end
 
+function Dataset:getAugmentation(X, aug_type)
+  batch_size = X:size(1)
+  for i = 1, batch_size do
+    local x = X[i]:clone()
+    if aug_type < 5 then
+        x = image.hflip(x)
+    end   
+    if aug_type%5 ~= 0 then
+      crop = crop_indices[aug_type%5]
+      x = image.crop(x, crop[1], crop[2], crop[3], crop[4])  
+      x = image.scale(x, width) 
+    end
+    X[i] = x
+  end
+  return X
+end
+
 return Dataset
