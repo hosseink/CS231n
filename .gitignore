@@ -5,3 +5,4 @@ datasets/**
 .env/*
 cs231n/build/*
 .DS_Store
+*.t7
