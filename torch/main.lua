@@ -4,122 +4,42 @@ require 'nn'
 require 'optim'
 require 'torch'
 require 'cunn'
+require 'cudnn'
 require 'cutorch'
 
-dataset_dir = '../datasets/tiny-imagenet-200/'
-train_input = dataset_dir .. 'train/'
-val_input = dataset_dir .. 'val/'
+
 local dtype = 'torch.CudaTensor'
 
-local Nt = 0
-local Nc = 0
-cDict={}
-for folder in lfs.dir(train_input) do
-	if string.sub(folder,1,1)=="n" then
-		Nc = Nc+1
-		cDict[folder] = Nc
-		for file in lfs.dir(train_input .. folder .. "/images" ) do
-			if string.sub(file,1,1)=="n" then
-    				Nt = Nt + 1
-			end
-		end
-	end
-end
+local Dataset = require('dataLoader')
+local createModel = require('models')
+
+print('Loading training dataset...')
+train = Dataset:create(train_table_path)
+print('Loading validating dataset...')
+val = Dataset:create(val_table_path)
 
 
-local X_train = torch.Tensor(Nt,3,64,64)
-local y_train = torch.Tensor(Nt)
-local X_val = torch.Tensor(10000,3,64,64)
-local y_val = torch.Tensor(10000)
+print('Loading the model...')
+model, crit = createModel(1)()
 
 
-
-
-local cnt=0
-for line in io.lines(val_input .. "val_annotations.txt") do
-      fName=string.format("val_%d.JPEG",cnt)
-      cnt = cnt + 1
-      y_val[cnt] = cDict[string.sub(line,string.find(line,"n%d%d%d%d%d%d%d%d"))]
-      ax=image.load(val_input .. "/images/" .. fName)
-      if ax:size(1)==3 then
-              X_val[cnt] = ax
-      end
-      if ax:size(1)==1 then
-              X_val[{cnt,1}] = ax
-              X_val[{cnt,2}] = ax
-              X_val[{cnt,3}] = ax
-      end
-
-end
-
-
-print("Validation Set Loaded!")
-
-cnt = 0
-for folder in lfs.dir(train_input) do
-        if string.sub(folder,1,1)=="n" then
-                for file in lfs.dir(train_input .. folder .. "/images" ) do
-                        if string.sub(file,1,1)=="n" then
-				cnt = cnt+1
-				y_train[cnt] = cDict[folder]
-				ax=image.load(train_input .. folder .. "/images/" .. file)
-				if ax:size(1)==3 then
-                                	X_train[cnt] = ax 
-                        	end
-				if ax:size(1)==1 then
-                                        X_train[{cnt,1}] = ax
-					X_train[{cnt,2}] = ax
-					X_train[{cnt,3}] = ax
-                                end		
-			end
-                end
-        end
-end
-
-print("Test Set Loaded!")
-
-
-
--- Defining The Model
-net = nn.Sequential()
-net:add (nn.SpatialConvolution(3,32,5,5,1,1,2,2))
-net:add (nn.SpatialBatchNormalization(64*64*64))
-net:add (nn.ReLU())
-net:add (nn.Dropout(0.5))
-
-net:add (nn.SpatialConvolution(32,64,3,3,1,1,1,1))
-net:add (nn.SpatialBatchNormalization(64*64*64))
-net:add (nn.ReLU())
-net:add (nn.Dropout(0.5))
-
-net:add (nn.View(64*64*64))
-net:add (nn.Linear(64*64*64,200))
-net:add (nn.BatchNormalization(200))
-net:add (nn.ReLU())
-
-net:add (nn.Linear(200,200))
-net:type(dtype)
+local X_train = train.data
+local y_train = train.label
+local X_val = val.data
+local y_val = val.label
 
 weights , grad_weights = net:getParameters()
 
--- Loss Function
-crit = nn.CrossEntropyCriterion()
-crit:type(dtype)
-
-print("Network is Loaded!")
-
-local batch_size=200
+local batch_size=100
 local alpha=0.001
-local num_epoch=5
+local num_epoch=30
 
 
 
 
 local function f(w)
 	assert(w == weights)
-	local batchInd=torch.LongTensor(batch_size):random(100000) 
-	local X_batch = X_train:index(1,batchInd):clone()
-	local y_batch = y_train:index(1,batchInd):clone()
+        X_batch, y_batch = train:getBatch(batch_size, true, .5)
 	local x = X_batch:type(dtype)
 	local y = y_batch:type(dtype)
 	
@@ -140,12 +60,13 @@ local function eval(x,y,batchSize)
 	local y_pred = torch.Tensor(NVal)
 	local correct = 0
 	for i=1,NBatch do 
+		print(string.format("val iter:%d",i))
 		local s = (i-1)*batchSize +1
 		local e = i*batchSize  
-		local X_batch = x[{{s,e},{},{},{}}]:clone()
-		local y_batch = y[{{s,e}}]:clone()
-		local xg = X_batch:type(dtype)
-		local yg = y_batch:type(dtype)
+		local xg= x[{{s,e},{},{},{}}]:clone():type(dtype)
+		local yg = y[{{s,e}}]:clone():type(dtype)
+		--local xg = X_batch:type(dtype)
+		--local yg = y_batch:type(dtype)
 		net:evaluate()
 		local scores = net:forward(xg)
 		net:training()
@@ -163,20 +84,36 @@ print("Foward-Backward Function Loaded!")
 
 local num_iter = num_epoch * 100000 / batch_size
 local epoch=1
+local best_acc=0
+local log=string.format("alpha=%f batch size=%d num epoch=%d\n",alpha,batch_size,num_epoch)
+
 for i=1,num_iter do
-	local state = {learningRate = 1e-3}
+	print(string.format("iteration:%d",i))
+	local state = {learningRate = alpha}
 	optim.adam(f, weights, state)
-	if ((i%50)==0) then 
+	if ((i%400)==0) then
+		--local valInd=torch.LongTensor(1000):random(10000)
+	        --local X_valbatch = X_val:index(1,valInd):clone()
+        	--local y_valbatch = y_val:index(1,valInd):clone() 
 		local l=f(weights)
 		local acc =eval(X_val,y_val,batch_size)	
 		print(string.format("Iteration=%d Loss=%f  Validation Accuracy=%f",i,l,acc))
+		if (acc > best_acc) then
+                        torch.save('net_best.t7',net)
+                        best_acc = acc
+                end
+
+		log= log .. string.format("Iteration=%d Loss=%f  Validation Accuracy=%f\n",i,l,acc)
 	end
 	if(i% (100000 / batch_size) ==0) then 
 		print(string.format("epoch = %d",epoch))
-		epoch = epoch +1
+		epoch = epoch + 1
+		alpha = alpha * 0.9
 	end
-	
 
 end
-
+log_file = io.open("log.txt","w")
+io.output(log_file)
+io.write(log)
+io.close(log_file)
 

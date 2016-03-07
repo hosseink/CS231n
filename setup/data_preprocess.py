@@ -105,9 +105,9 @@ def to_fb_format():
 if __name__ == "__main__":
 
   # Creating tables
-  #idx_to_label, train_table, val_table, test_table, label_table = create_tables()
+  idx_to_label, train_table, val_table, test_table, label_table = create_tables()
   #augment(dataset_dir + 'train/', .7)
- # to_fb_format();
+  #to_fb_format();
 
 
   

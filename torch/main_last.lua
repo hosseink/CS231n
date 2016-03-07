@@ -8,8 +8,9 @@ require 'cudnn'
 require 'cutorch'
 
 
-train_input='/home/ubuntu/tiny-imagenet-200/train/'
-val_input='/home/ubuntu/tiny-imagenet-200/val/'
+dataset_dir = '../datasets/tiny-imagenet-200/'
+train_input= dataset_dir .. 'train/'
+val_input=dataset_dir .. 'val/'
 local dtype = 'torch.CudaTensor'
 
 local Nt = 0
@@ -120,10 +121,10 @@ local function basicblock(n, stride)
 
       local s = nn.Sequential()
       s:add(Convolution(nInputPlane,n,3,3,stride,stride,1,1))
-      s:add(SBatchNorm(n*Width*Width))
+      s:add(SBatchNorm(n))
       s:add(ReLU(true))
       s:add(Convolution(n,n,3,3,1,1,1,1))
-      s:add(SBatchNorm(n*Width*Width))
+      s:add(SBatchNorm(n))
 
       return nn.Sequential()
          :add(nn.ConcatTable()
@@ -144,16 +145,17 @@ end
 
 
 net = nn.Sequential()
-iChannels = 64
+iChannels = 32
 Width = 64
 
-net:add(Convolution(3,64,3,3,1,1,1,1))
-net:add(SBatchNorm(64*64*64))
+net:add(Convolution(3,32,5,5,1,1,2,2))
+net:add(SBatchNorm(32))
 net:add(ReLU(true))
-net:add(Max(2,2,2,2,0,0))
-net:add(layer(basicblock, 64, 2, 1))
-net:add(layer(basicblock, 128, 3, 2))
-net:add(layer(basicblock, 256, 1, 2))
+net:add(layer(basicblock, 32, 2, 1))
+net:add(layer(basicblock, 64, 2, 2))
+net:add(layer(basicblock, 128, 2, 2))
+net:add(layer(basicblock, 256, 2, 2))
+--net:add(Max(2,2,2,2,0,0))
 --net:add(layer(basicblock, 128, 1, 2))
 net:add(Avg(2, 2, 1, 1))
 net:add(nn.View(7*7*256))
@@ -189,7 +191,7 @@ print("Network is Loaded!")
 
 local batch_size=100
 local alpha=0.001
-local num_epoch=15
+local num_epoch=20
 
 
 
@@ -219,7 +221,7 @@ local function eval(x,y,batchSize)
 	local y_pred = torch.Tensor(NVal)
 	local correct = 0
 	for i=1,NBatch do 
-		print(string.format("val iter:%d",i))
+		--print(string.format("val iter:%d",i))
 		local s = (i-1)*batchSize +1
 		local e = i*batchSize  
 		local xg= x[{{s,e},{},{},{}}]:clone():type(dtype)
@@ -247,7 +249,7 @@ local best_acc=0
 local log=string.format("alpha=%f batch size=%d num epoch=%d\n",alpha,batch_size,num_epoch)
 
 for i=1,num_iter do
-	print(string.format("iteration:%d",i))
+	--print(string.format("iteration:%d",i))
 	local state = {learningRate = alpha}
 	optim.adam(f, weights, state)
 	if ((i%200)==0) then
@@ -267,7 +269,7 @@ for i=1,num_iter do
 	if(i% (100000 / batch_size) ==0) then 
 		print(string.format("epoch = %d",epoch))
 		epoch = epoch + 1
-		alpha = alpha * 0.9
+		alpha = alpha * 0.97
 	end
 
 end
