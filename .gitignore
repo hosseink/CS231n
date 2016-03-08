@@ -6,3 +6,5 @@ datasets/**
 cs231n/build/*
 .DS_Store
 *.t7
+models_log/*
+models_log

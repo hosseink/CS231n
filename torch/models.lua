@@ -86,8 +86,37 @@ local function createModel1()
 
   return net, crit
 end
--------------------------------------------------------------------
 
+-------------------------------------------------------------------
+------------------------------MODEL 2------------------------------
+-------------------------------------------------------------------
+local function createModel2()
+
+  net = nn.Sequential()
+  iChannels = 64
+
+  net:add(Convolution(3,64,3,3,1,1,1,1))
+  net:add(Convolution(64,64,3,3,1,1,1,1))
+  net:add(SBatchNorm(64))
+  net:add(ReLU(true))
+  net:add(Max(2,2,2,2,0,0))
+  net:add(layer(basicblock, 64, 2, 1))
+  net:add(layer(basicblock, 128, 3, 2))
+  net:add(layer(basicblock, 256, 4, 2))
+  net:add(layer(basicblock, 512, 2, 2))
+  net:add(Avg(2, 2, 1, 1))
+  net:add(nn.View(3*3*512))
+  net:add(nn.Linear(3*3*512, 200))
+
+  net:type(dtype)
+
+  -- Loss Function
+  crit = nn.CrossEntropyCriterion()
+  crit:type(dtype)
+
+  return net, crit
+end
+-------------------------------------------------------------------
 
 
 -------------------------------------------------------------------

@@ -99,14 +99,16 @@ function Dataset:create(path)
   return setmetatable(dataset, self)
 end
 
-crop_width = math.floor(width * crop_ratio)
-crop_height = math.floor(height * crop_ratio)
+--crop_width = math.floor(width * crop_ratio)
+--crop_height = math.floor(height * crop_ratio)
+crop_width = 56
+crop_height = 56 
 local crop_indices = {[1] = {0,0,crop_width, crop_height},
                       [2] = {width - crop_width, height - crop_height, width, height},
 		      [3] = {0, height - crop_height, crop_width, height},
                       [4] = {width - crop_width, 0 , width, crop_height}}
 
-function Dataset:getBatch(batch_size, withAugmentation, p)
+function Dataset:getBatch(batch_size, withAugmentation, p, is_random)
   local batchInd=torch.LongTensor(batch_size):random(self.size) 
   local X = self.data:index(1,batchInd):clone()
   local y = self.label:index(1,batchInd):clone()
@@ -119,7 +121,13 @@ function Dataset:getBatch(batch_size, withAugmentation, p)
       end
       local q = math.random()
       if q < p then
-        crop = crop_indices[math.floor(4 * q / p) + 1]
+        if is_random then
+          xx = math.random(8) - 1
+          yy = math.random(8) - 1
+          crop = {xx, yy, xx + crop_width, yy + crop_width}
+        else
+          crop = crop_indices[math.floor(4 * q / p) + 1]
+        end
         x = image.crop(x, crop[1], crop[2], crop[3], crop[4])  
         x = image.scale(x, width) 
       end

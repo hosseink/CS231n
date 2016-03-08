@@ -20,7 +20,7 @@ val = Dataset:create(val_table_path)
 
 
 print('Loading the model...')
-model, crit = createModel(1)()
+model, crit = createModel(2)()
 
 
 local X_train = train.data
@@ -32,14 +32,14 @@ weights , grad_weights = net:getParameters()
 
 local batch_size=100
 local alpha=0.001
-local num_epoch=30
+local num_epoch=40
 
 
 
 
 local function f(w)
 	assert(w == weights)
-        X_batch, y_batch = train:getBatch(batch_size, true, .5)
+        X_batch, y_batch = train:getBatch(batch_size, true, .4, true)
 	local x = X_batch:type(dtype)
 	local y = y_batch:type(dtype)
 	
@@ -60,7 +60,7 @@ local function eval(x,y,batchSize)
 	local y_pred = torch.Tensor(NVal)
 	local correct = 0
 	for i=1,NBatch do 
-		print(string.format("val iter:%d",i))
+		--print(string.format("val iter:%d",i))
 		local s = (i-1)*batchSize +1
 		local e = i*batchSize  
 		local xg= x[{{s,e},{},{},{}}]:clone():type(dtype)
@@ -88,7 +88,9 @@ local best_acc=0
 local log=string.format("alpha=%f batch size=%d num epoch=%d\n",alpha,batch_size,num_epoch)
 
 for i=1,num_iter do
-	print(string.format("iteration:%d",i))
+        --if i%100 == 0 then
+	--  print(string.format("iteration:%d",i))
+        --end
 	local state = {learningRate = alpha}
 	optim.adam(f, weights, state)
 	if ((i%400)==0) then
@@ -97,18 +99,20 @@ for i=1,num_iter do
         	--local y_valbatch = y_val:index(1,valInd):clone() 
 		local l=f(weights)
 		local acc =eval(X_val,y_val,batch_size)	
-		print(string.format("Iteration=%d Loss=%f  Validation Accuracy=%f",i,l,acc))
+		local train_acc =eval(X_train,y_train,batch_size)	
+    
+		print(string.format("Iteration=%d Loss=%f  Validation Accuracy=%f, Training Accuracy=%f",i,l,acc, train_acc))
 		if (acc > best_acc) then
                         torch.save('net_best.t7',net)
                         best_acc = acc
                 end
 
-		log= log .. string.format("Iteration=%d Loss=%f  Validation Accuracy=%f\n",i,l,acc)
+		log= log .. string.format("Iteration=%d Loss=%f  Validation Accuracy=%f, Training Accuracy=%f\n",i,l,acc,train_acc)
 	end
 	if(i% (100000 / batch_size) ==0) then 
 		print(string.format("epoch = %d",epoch))
 		epoch = epoch + 1
-		alpha = alpha * 0.9
+		alpha = alpha * 0.96
 	end
 
 end
