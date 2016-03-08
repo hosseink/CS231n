@@ -20,7 +20,7 @@ val = Dataset:create(val_table_path)
 
 
 print('Loading the model...')
-model, crit = createModel(2)()
+model, crit = createModel(4)()
 
 
 local X_train = train.data
@@ -31,7 +31,7 @@ local y_val = val.label
 weights , grad_weights = net:getParameters()
 
 local batch_size=100
-local alpha=0.001
+local alpha=0.002
 local num_epoch=40
 
 
@@ -88,9 +88,9 @@ local best_acc=0
 local log=string.format("alpha=%f batch size=%d num epoch=%d\n",alpha,batch_size,num_epoch)
 
 for i=1,num_iter do
-        --if i%100 == 0 then
-	--  print(string.format("iteration:%d",i))
-        --end
+        if i%10 == 0 then
+	  print(string.format("iteration:%d",i))
+        end
 	local state = {learningRate = alpha}
 	optim.adam(f, weights, state)
 	if ((i%400)==0) then
@@ -99,7 +99,8 @@ for i=1,num_iter do
         	--local y_valbatch = y_val:index(1,valInd):clone() 
 		local l=f(weights)
 		local acc =eval(X_val,y_val,batch_size)	
-		local train_acc =eval(X_train,y_train,batch_size)	
+		--local train_acc =eval(X_train,y_train,batch_size)	
+		local train_acc = 0
     
 		print(string.format("Iteration=%d Loss=%f  Validation Accuracy=%f, Training Accuracy=%f",i,l,acc, train_acc))
 		if (acc > best_acc) then
@@ -112,7 +113,7 @@ for i=1,num_iter do
 	if(i% (100000 / batch_size) ==0) then 
 		print(string.format("epoch = %d",epoch))
 		epoch = epoch + 1
-		alpha = alpha * 0.96
+		alpha = alpha * 0.99
 	end
 
 end
