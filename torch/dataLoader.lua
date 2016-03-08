@@ -39,6 +39,7 @@ dataset_dir = '/home/ubuntu/CS231n/datasets/tables/'
 train_table_path = dataset_dir .. 'train_table.txt'
 val_table_path = dataset_dir .. 'val_table.txt'
 test_table_path = dataset_dir .. 'test_table.txt'
+words_table_path = dataset_dir .. 'words.txt'
 
 
 num_of_classes = 200
@@ -128,8 +129,20 @@ function Dataset:getBatch(batch_size, withAugmentation, p)
   return X, y
 end
 
+function getDict()
+  cDict = {}
+  for line in io.lines(words_table_path) do
+    local tokens = BuildArray(string.gmatch(line, "[^%s]+")) 
+    cDict[tokens[1]] = tokens[2]
+  end
+  return cDict
+end
+
+cDict = getDict()
+
 function Dataset:getAugmentation(X, aug_type)
   batch_size = X:size(1)
+  OUT = torch.Tensor(X:size(1), X:size(2), X:size(3), X:size(4))
   for i = 1, batch_size do
     local x = X[i]:clone()
     if aug_type < 5 then
@@ -140,9 +153,9 @@ function Dataset:getAugmentation(X, aug_type)
       x = image.crop(x, crop[1], crop[2], crop[3], crop[4])  
       x = image.scale(x, width) 
     end
-    X[i] = x
+    OUT[i] = x
   end
-  return X
+  return OUT
 end
 
 return Dataset
