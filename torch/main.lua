@@ -31,7 +31,7 @@ local y_val = val.label
 weights , grad_weights = net:getParameters()
 
 local batch_size=100
-local alpha=0.002
+local alpha=0.001
 local num_epoch=40
 
 
@@ -93,14 +93,16 @@ for i=1,num_iter do
         end
 	local state = {learningRate = alpha}
 	optim.adam(f, weights, state)
-	if ((i%400)==0) then
-		--local valInd=torch.LongTensor(1000):random(10000)
-	        --local X_valbatch = X_val:index(1,valInd):clone()
-        	--local y_valbatch = y_val:index(1,valInd):clone() 
+	if ((i%500)==0) then
+		local trainInd=torch.LongTensor(5000):random(100000)
+                local X_batchT = X_train:index(1,trainInd)
+                local y_batchT = y_train:index(1,trainInd)
+
+                local train_acc=eval(X_batchT,y_batchT,batch_size)
 		local l=f(weights)
 		local acc =eval(X_val,y_val,batch_size)	
 		--local train_acc =eval(X_train,y_train,batch_size)	
-		local train_acc = 0
+		--local train_acc = 0
     
 		print(string.format("Iteration=%d Loss=%f  Validation Accuracy=%f, Training Accuracy=%f",i,l,acc, train_acc))
 		if (acc > best_acc) then

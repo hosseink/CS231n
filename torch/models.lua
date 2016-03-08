@@ -171,7 +171,7 @@ end
 -------------------------------------------------------------------
 -- Other params:						  -
 --	batch_size = 100					  -
--- 	alpha = .002						  -
+-- 	alpha = .001						  -
 -- 	num_epoch = 40						  -
 -- 	getBatch(_, true, .4, true)				  -
 --	weight decay = .99					  -
@@ -190,9 +190,9 @@ local function createModel4()
   net:add(SBatchNorm(64))
   net:add(ReLU(true))
   net:add(Avg(2,2,2,2,0,0))
-  net:add(layer(basicblock, 128, 2, 1))
+  net:add(layer(basicblock, 128, 1, 1))
   net:add(layer(basicblock, 256, 2, 2))
-  net:add(layer(basicblock, 512, 3, 2))
+  net:add(layer(basicblock, 512, 2, 2))
   net:add(Avg(2, 2, 1, 1))
   net:add(nn.View(7*7*512))
   net:add(nn.Dropout(.5))
